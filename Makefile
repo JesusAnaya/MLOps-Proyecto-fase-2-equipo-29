@@ -144,6 +144,15 @@ dvc-add:
 	@echo "Después: git add <archivo>.dvc .gitignore"
 
 #################################################################################
+# DOCUMENTACIÓN                                                                  #
+#################################################################################
+
+## Validar y generar diagramas UML
+.PHONY: validate-diagrams
+validate-diagrams:
+	uv run python docs/generate_diagrams.py
+
+#################################################################################
 # GESTIÓN DEL ENTORNO                                                          #
 #################################################################################
 

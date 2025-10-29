@@ -229,9 +229,9 @@ if uv run mlops-prepare-data \
     --input data/raw/german_credit_modified.csv \
     --save \
     > $LOG_DIR/step1_prepare_data.log 2>&1; then
-    log_info "✓ Preparación de datos completada"
+    log_info "[OK] Preparación de datos completada"
 else
-    log_error "✗ Error en preparación de datos"
+    log_error "[ERROR] Error en preparación de datos"
     exit 1
 fi
 
@@ -241,9 +241,9 @@ if uv run mlops-prepare-features \
     --train data/processed/Xtraintest.csv \
     --save-preprocessor \
     > $LOG_DIR/step2_prepare_features.log 2>&1; then
-    log_info "✓ Preparación de features completada"
+    log_info "[OK] Preparación de features completada"
 else
-    log_error "✗ Error en preparación de features"
+    log_error "[ERROR] Error en preparación de features"
     exit 1
 fi
 
@@ -255,9 +255,9 @@ if uv run mlops-train \
     --preprocessor models/preprocessor.joblib \
     --model $MODEL \
     > $LOG_DIR/step3_train.log 2>&1; then
-    log_info "✓ Entrenamiento completado"
+    log_info "[OK] Entrenamiento completado"
 else
-    log_error "✗ Error en entrenamiento"
+    log_error "[ERROR] Error en entrenamiento"
     exit 1
 fi
 
@@ -269,9 +269,9 @@ if uv run mlops-predict \
     --y-test data/processed/ytraintest.csv \
     --save \
     > $LOG_DIR/step4_predict.log 2>&1; then
-    log_info "✓ Evaluación completada"
+    log_info "[OK] Evaluación completada"
 else
-    log_error "✗ Error en evaluación"
+    log_error "[ERROR] Error en evaluación"
     exit 1
 fi
 
@@ -340,14 +340,14 @@ def run_pipeline(model_name: str = "logistic_regression", use_smote: bool = True
         X_train, X_test, y_train, y_test = load_and_prepare_data(
             filepath=raw_data_path, save_processed=True, return_combined=False
         )
-        logger.info(f"✓ Datos preparados: {len(X_train) + len(X_test)} muestras")
+        logger.info(f"[OK] Datos preparados: {len(X_train) + len(X_test)} muestras")
 
         # 2. Preparar features
         logger.info("[2/4] Preparando features...")
         X_train_t, X_test_t, preprocessor = prepare_features(
             X_train=X_train, X_test=X_test, save_preprocessor=True
         )
-        logger.info(f"✓ Features preparadas: {X_train_t.shape[1]} features")
+        logger.info(f"[OK] Features preparadas: {X_train_t.shape[1]} features")
 
         # 3. Entrenar modelo
         logger.info(f"[3/4] Entrenando modelo {model_name}...")
@@ -363,7 +363,7 @@ def run_pipeline(model_name: str = "logistic_regression", use_smote: bool = True
 
         if results:
             roc_auc = results["roc_auc"]["test_mean"]
-            logger.info(f"✓ Modelo entrenado. ROC-AUC: {roc_auc:.4f}")
+            logger.info(f"[OK] Modelo entrenado. ROC-AUC: {roc_auc:.4f}")
 
         # 4. Evaluar
         logger.info("[4/4] Evaluando modelo...")
@@ -501,9 +501,9 @@ def main():
                 "config": exp_config,
                 "metrics": results,
             }
-            logger.info(f"✓ {exp_config['name']} completado")
+            logger.info(f"[OK] {exp_config['name']} completado")
         except Exception as e:
-            logger.error(f"✗ Error en {exp_config['name']}: {e}")
+            logger.error(f"[ERROR] Error en {exp_config['name']}: {e}")
             results_all[exp_config["name"]] = {"config": exp_config, "error": str(e)}
 
     # Guardar resultados
