@@ -49,14 +49,17 @@ Este proyecto implementa un pipeline MLOps completo para el análisis y predicci
 ## Requisitos
 
 - **Python**: 3.12.0
-- **UV**: Gestor de paquetes Python (instalado localmente)
+- **UV**: Gestor de paquetes Python
   - UV maneja el entorno virtual automáticamente
   - No es necesario activar el venv manualmente
+- **DVC**: Data Version Control con soporte para S3
+- **AWS CLI**: Para acceso a bucket S3
+- **Git**: Para control de versiones de código
 - **Sistema Operativo**: macOS, Linux, o Windows
 
 ## Instalación
 
-**Importante**: Este proyecto usa **UV** para gestión de paquetes. No es necesario usar `pip` o activar entornos virtuales manualmente. UV gestiona todo automáticamente.
+**Importante**: Este proyecto usa **UV** para gestión de paquetes y **DVC** para versionado de datos. UV gestiona el entorno automáticamente y DVC maneja los datasets grandes en S3.
 
 ### 1. Clonar el Repositorio
 
@@ -65,7 +68,21 @@ git clone git@github.com:JesusAnaya/MLOps-Proyecto-fase-2-equipo-29.git
 cd MLOps-Proyecto-fase-2-equipo-29
 ```
 
-### 2. Inicializar el Proyecto
+### 2. Instalar UV (si no lo tienes)
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Para más información: [Documentación oficial de UV](https://docs.astral.sh/uv/getting-started/installation/)
+
+### 3. Inicializar el Proyecto
 
 ```bash
 # Método recomendado: Inicialización completa con UV
@@ -76,7 +93,136 @@ make create-environment  # Crea venv con UV
 make requirements        # Instala dependencias con uv sync
 ```
 
-### 3. Uso con UV (Recomendado)
+### 4. Configuración de DVC (Data Version Control)
+
+#### IMPORTANTE: NO ejecutar `dvc init`
+
+**El proyecto ya está configurado con DVC.** No es necesario ejecutar `dvc init` ni reconfigurar DVC. La configuración ya está lista para usar.
+
+#### Instalación de DVC
+
+```bash
+# Instalar DVC con soporte para S3
+uv add "dvc[s3]"
+
+# O si prefieres instalación global
+pip install "dvc[s3]"
+```
+
+#### Configuración de Credenciales AWS
+
+**Requisito obligatorio:** Debes configurar las credenciales de AWS CLI para poder trabajar con el versionado de DVC:
+
+```bash
+# Instalar AWS CLI (si no lo tienes)
+# macOS:
+brew install awscli
+
+# Windows:
+choco install awscli
+
+# Configurar credenciales
+aws configure
+```
+
+Se te solicitará:
+- **AWS Access Key ID**: (proporcionada por el equipo)
+- **AWS Secret Access Key**: (proporcionada por el equipo)
+- **Default region name**: `us-east-1`
+- **Default output format**: `json`
+
+**Nota:** Cada miembro del equipo recibirá sus propias claves de acceso.
+
+#### Sincronización de Datos DVC
+
+Una vez configuradas las credenciales AWS, sincroniza los datos:
+
+```bash
+# Descargar datos del almacenamiento remoto (S3)
+dvc pull
+
+# Verificar que los datos se descargaron correctamente
+dvc status
+
+# Ver información de los datos rastreados
+dvc list . data/raw
+```
+
+**Archivos que se descargarán**:
+- `data/raw/german_credit_modified.csv` (96 KB)
+- `data/raw/german_credit_original.csv` (46 KB)
+- `data/processed/Xtraintest.csv` (83 KB)
+- `data/processed/ytraintest.csv` (4 KB)
+
+#### Flujo de Trabajo con DVC
+
+**Para agregar nuevos datos:**
+
+```bash
+# 1. Agregar archivo a DVC
+dvc add data/raw/nuevo_dataset.csv
+
+# 2. Agregar metadatos de DVC a Git
+git add data/raw/nuevo_dataset.csv.dvc data/raw/.gitignore
+git commit -m "Agregar nuevo_dataset a DVC"
+
+# 3. Subir datos a S3
+dvc push
+
+# 4. Subir cambios de código a GitHub
+git push
+```
+
+**REGLA IMPORTANTE:** Siempre hacer commit de los archivos `.dvc` en Git ANTES de hacer `dvc push`. Esto garantiza que los metadatos estén versionados antes de subir los datos.
+
+**Para sincronizar cambios de otros miembros:**
+
+```bash
+# 1. Actualizar código desde GitHub
+git pull
+
+# 2. Descargar datos actualizados desde S3
+dvc pull
+
+# 3. Verificar estado
+dvc status
+```
+
+#### Archivos Versionados con DVC
+
+Los siguientes archivos están versionados con DVC (no con Git):
+
+**Datos Raw**:
+- `data/raw/german_credit_modified.csv` (96 KB) - Dataset modificado con valores inválidos
+- `data/raw/german_credit_original.csv` (46 KB) - Dataset original limpio
+
+**Datos Procesados** (generados por el pipeline):
+- `data/processed/Xtraintest.csv` (83 KB) - Features combinadas (train + test)
+- `data/processed/ytraintest.csv` (4 KB) - Variable objetivo combinada
+
+**Nota**: Los archivos CSV NO están en Git. Solo los archivos `.dvc` (metadatos) y `.gitignore` están versionados en Git.
+
+#### Comandos DVC Útiles
+
+```bash
+# Ver estado de todos los archivos DVC
+dvc status
+
+# Ver diferencias con el remoto
+dvc diff
+
+# Listar archivos en el remoto S3
+dvc list . data/raw
+dvc list . data/processed
+
+# Obtener información de un archivo específico
+dvc get . data/raw/german_credit_modified.csv.dvc
+
+# Ver log de cambios en datos
+dvc diff --show-json
+```
+
+### 5. Uso con UV (Recomendado)
 
 **UV permite ejecutar comandos directamente sin activar el entorno virtual**:
 
@@ -103,7 +249,7 @@ source .venv/bin/activate
 
 Nota: Con UV, no es necesario activar el entorno virtual. Puedes usar `uv run` para ejecutar cualquier comando Python.
 
-### 4. Verificar Instalación
+### 6. Verificar Instalación
 
 ```bash
 # Ver scripts disponibles
@@ -183,11 +329,20 @@ proyecto_etapa_2/
 │   ├── test_modeling.py      # Tests de modelado
 │   └── ...                   # Tests adicionales
 │
-├── data/                      # Datos del proyecto
+├── data/                      # Datos del proyecto (versionados con DVC)
 │   ├── raw/                  # Datos originales
+│   │   ├── .gitignore       # Git ignora CSVs (manejados por DVC)
+│   │   ├── *.csv.dvc        # Metadatos DVC (versionados en Git)
 │   ├── processed/            # Datos procesados
+│   │   ├── .gitignore       # Git ignora CSVs (manejados por DVC)
+│   │   └── *.csv.dvc        # Metadatos DVC (versionados en Git)
 │   ├── interim/              # Datos intermedios
 │   └── external/             # Datos externos
+│
+├── .dvc/                      # Configuración de DVC
+│   ├── config                # Configuración de remote S3
+│   └── .gitignore            # Archivos DVC a ignorar
+├── .dvcignore                 # Patrones ignorados por DVC
 │
 ├── models/                    # Modelos entrenados
 ├── notebooks/                 # Notebooks de exploración
@@ -546,6 +701,24 @@ make requirements      # Instalar dependencias
 make clean             # Limpiar archivos temporales
 ```
 
+### Gestión de Datos con DVC
+
+```bash
+make dvc-pull          # Descargar datos desde S3
+make dvc-push          # Subir datos a S3
+make dvc-status        # Ver estado de archivos DVC
+make dvc-add           # Ayuda para agregar archivos a DVC
+```
+
+**Comandos DVC directos**:
+```bash
+dvc pull               # Descargar datos
+dvc push               # Subir datos
+dvc status             # Ver estado
+dvc add data/file.csv  # Agregar archivo a DVC
+dvc list . data/       # Listar archivos en remoto
+```
+
 ### Calidad de Código
 
 ```bash
@@ -564,11 +737,12 @@ make predict           # Realizar predicciones
 make pipeline          # Pipeline completo
 ```
 
-### Datos (S3)
+### Datos (DVC)
 
 ```bash
-make sync-data-down    # Descargar datos desde S3
-make sync-data-up      # Subir datos a S3
+make dvc-pull          # Descargar datos desde S3 con DVC
+make dvc-push          # Subir datos a S3 con DVC
+make dvc-status        # Ver estado de DVC
 ```
 
 ### Utilidades
@@ -677,6 +851,8 @@ Ver `mlops_project/README.md` para más detalles sobre orquestación.
 - **Commits**: Español (convención del equipo)
 - **Gestión de Paquetes**: UV (no pip directamente)
 - **Ejecución**: `uv run` para todos los comandos Python (no requiere activar venv)
+- **Versionado de Datos**: DVC para datasets, Git para código y metadatos `.dvc`
+- **Almacenamiento**: S3 para datos grandes, GitHub para código
 
 ## Equipo
 

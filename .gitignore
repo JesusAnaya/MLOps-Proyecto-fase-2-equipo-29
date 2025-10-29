@@ -1,5 +1,6 @@
-# Data
-/data/
+# Data (excluir datasets pero incluir archivos .dvc y .gitignore)
+# Los archivos .dvc y .gitignore dentro de data/ se trackean con Git
+# Los archivos CSV se ignoran (están en data/*/.gitignore generados por DVC)
 
 # Mac OS-specific storage files
 .DS_Store

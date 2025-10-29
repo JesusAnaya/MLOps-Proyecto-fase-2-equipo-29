@@ -115,20 +115,33 @@ pipeline: prepare-data prepare-features train
 	@echo ">>> Pipeline MLOps completado exitosamente"
 
 #################################################################################
-# GESTIÓN DE DATOS (S3)                                                        #
+# GESTIÓN DE DATOS (DVC + S3)                                                  #
 #################################################################################
 
-## Descargar datos desde S3
-.PHONY: sync-data-down
-sync-data-down:
-	aws s3 sync s3://dvc-mna-mlops-equipo-29-datos-projecto/data/ data/
-	@echo ">>> Datos descargados desde S3"
+## Descargar datos desde S3 con DVC
+.PHONY: dvc-pull
+dvc-pull:
+	dvc pull
+	@echo ">>> Datos descargados desde S3 con DVC"
 
-## Subir datos a S3
-.PHONY: sync-data-up
-sync-data-up:
-	aws s3 sync data/ s3://dvc-mna-mlops-equipo-29-datos-projecto/data/
-	@echo ">>> Datos subidos a S3"
+## Subir datos a S3 con DVC
+.PHONY: dvc-push
+dvc-push:
+	dvc push
+	@echo ">>> Datos subidos a S3 con DVC"
+
+## Ver estado de DVC
+.PHONY: dvc-status
+dvc-status:
+	dvc status
+	@echo ">>> Estado de DVC mostrado"
+
+## Agregar nuevo archivo a DVC
+.PHONY: dvc-add
+dvc-add:
+	@echo "Uso: dvc add <archivo>"
+	@echo "Ejemplo: dvc add data/raw/nuevo_dataset.csv"
+	@echo "Después: git add <archivo>.dvc .gitignore"
 
 #################################################################################
 # GESTIÓN DEL ENTORNO                                                          #
