@@ -1,0 +1,6 @@
+outs:
+- md5: 5ed9c0d0ed1fb9f08ac03e72cbd2157d
+  size: 3975
+  hash: md5
+  path: ytraintest.csv
+
